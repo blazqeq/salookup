@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spiller Lookup - SuperAwesome</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('https://www.minecraft.net/content/dam/community/fy23/minecraft-live-assets/hero-image.jpg');
+            background-size: cover;
+            background-attachment: fixed;
+            color: white; 
+            padding: 20px; 
+            text-align: center; 
+        }
+        
+        .lookup-container { 
+            background: rgba(45, 45, 45, 0.95); 
+            max-width: 500px; 
+            margin: 50px auto; 
+            padding: 30px; 
+            border-radius: 10px; 
+            border: 2px solid #f39c12; 
+        }
+        
+        input { padding: 12px; width: 60%; border-radius: 5px; border: none; margin-right: 10px; }
+        
+        button { padding: 12px 20px; background: #f39c12; border: none; color: white; cursor: pointer; border-radius: 5px; font-weight: bold; }
+        
+        button:hover { background: #e67e22; }
+        
+        #result { margin-top: 25px; text-align: left; }
+        
+        .info-row { margin: 10px 0; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 5px; }
+        
+        .status-online { color: #2ecc71; font-weight: bold; }
+        .status-offline { color: #ff6b6b; font-weight: bold; }
+        .text-muted { color: #bdc3c7; font-style: italic; }
+    </style>
+</head>
+<body>
+
+    <div class="lookup-container">
+        <h1>Spiller Lookup</h1>
+        <p>Søg efter en spiller på SuperAwesome</p>
+        
+        <input type="text" id="username" placeholder="Indtast spillernavn...">
+        <button onclick="lookupPlayer()">Søg</button>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const inputField = document.getElementById("username");
+
+        inputField.addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                lookupPlayer();
+            }
+        });
+
+        async function lookupPlayer() {
+            const user = inputField.value;
+            const resDiv = document.getElementById('result');
+            
+            if(!user) {
+                resDiv.innerHTML = "Indtast venligst et navn.";
+                return;
+            }
+
+            resDiv.innerHTML = "Henter data...";
+
+            try {
+                const response = await fetch(`https://api.superawesome.dk/players/${user}`);
+                const data = await response.json();
+
+                if (data.username) {
+                    // Status logik
+                    let statusDisplay = data.status === 'online' 
+                        ? `<span class="status-online">Online (spiller på ${data.currentServer})</span>` 
+                        : `<span class="status-offline">Offline</span>`;
+
+                    let htmlContent = `
+                        <div class="info-row"><b>Navn:</b> ${data.username}</div>
+                        <div class="info-row"><b>Status:</b> ${statusDisplay}</div>
+                    `;
+
+                    // Vis kun "Sidst online" hvis spilleren er offline
+                    if (data.status !== 'online') {
+                        const date = new Date(data.lastSeen);
+                        const formattedDate = date.toLocaleString('da-DK', {
+                            day: '2-digit', month: '2-digit', year: 'numeric',
+                            hour: '2-digit', minute: '2-digit'
+                        });
+                        const today = new Date();
+                        const diffTime = Math.abs(today - date);
+                        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                        
+                        htmlContent += `<div class="info-row"><b>Sidst online:</b> ${formattedDate} (${diffDays} dage siden)</div>`;
+                    }
+
+                    htmlContent += `
+                        <div class="info-row"><b>Lobbypoints:</b> ${data.lobbyPoints.toLocaleString()}</div>
+                        <div class="info-row"><b>Spillerpoints:</b> ${data.playerPoints.toLocaleString()}</div>
+                    `;
+
+                    if (data.discordID) {
+                        htmlContent += `<div class="info-row"><b>Discord ID:</b> ${data.discordID}</div>`;
+                    } else {
+                        htmlContent += `<div class="info-row text-muted">Spilleren har ikke linked nogen discord konti endnu.</div>`;
+                    }
+
+                    if (data.proDays !== null && data.proDays > 0) {
+                        htmlContent += `<div class="info-row"><b>Pro Dage tilbage:</b> ${data.proDays}</div>`;
+                    } else if (data.vipDays !== null && data.vipDays > 0) {
+                        htmlContent += `<div class="info-row"><b>VIP Dage tilbage:</b> ${data.vipDays}</div>`;
+                    }
+
+                    let uniqueAccess = data.lobbyAccess ? [...new Set(data.lobbyAccess)] : [];
+                    if (uniqueAccess.length > 0) {
+                        htmlContent += `<div class="info-row"><b>Lobby adgang:</b> ${uniqueAccess.join(", ")}</div>`;
+                    } else {
+                        htmlContent += `<div class="info-row text-muted">Spilleren har ikke købt adgang til nogen lobbyer endnu.</div>`;
+                    }
+
+                    resDiv.innerHTML = htmlContent;
+                } else {
+                    resDiv.innerHTML = "Kunne ikke finde spilleren.";
+                }
+            } catch (error) {
+                resDiv.innerHTML = "Fejl: Kunne ikke forbinde til API'et.";
+            }
+        }
+    </script>
+</body>
+</html>
