@@ -6,39 +6,55 @@
     <title>Spiller Lookup - SuperAwesome</title>
     <style>
         body { 
-            font-family: 'Segoe UI', sans-serif; 
-            background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('https://www.minecraft.net/content/dam/community/fy23/minecraft-live-assets/hero-image.jpg');
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://www.minecraft.net/content/dam/community/fy23/minecraft-live-assets/hero-image.jpg');
             background-size: cover;
             background-attachment: fixed;
             color: white; 
-            padding: 20px; 
+            padding: 40px 20px; 
             text-align: center; 
         }
         
         .lookup-container { 
-            background: rgba(45, 45, 45, 0.95); 
+            background: rgba(30, 30, 30, 0.85); 
+            backdrop-filter: blur(10px);
             max-width: 500px; 
-            margin: 50px auto; 
-            padding: 30px; 
-            border-radius: 10px; 
-            border: 2px solid #f39c12; 
+            margin: 0 auto; 
+            padding: 40px; 
+            border-radius: 20px; 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
         
-        h1 { color: #f39c12; }
+        h1 { color: #f39c12; margin-bottom: 20px; }
         
-        input { padding: 12px; width: 60%; border-radius: 5px; border: none; margin-right: 10px; }
+        input { 
+            padding: 14px; width: 60%; border-radius: 10px; border: 1px solid #444; 
+            background: #222; color: white; margin-right: 10px; outline: none;
+        }
         
-        button { padding: 12px 20px; background: #f39c12; border: none; color: white; cursor: pointer; border-radius: 5px; font-weight: bold; }
+        button { 
+            padding: 14px 25px; background: #f39c12; border: none; color: white; 
+            cursor: pointer; border-radius: 10px; font-weight: bold; transition: 0.3s;
+        }
         
-        button:hover { background: #e67e22; }
+        button:hover { background: #e67e22; transform: translateY(-2px); }
         
-        #result { margin-top: 25px; text-align: left; }
+        /* Fade-in effekt */
+        #result { 
+            margin-top: 30px; text-align: left; 
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        .info-row { margin: 10px 0; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 5px; }
+        .info-row { 
+            margin: 10px 0; padding: 12px; background: rgba(255,255,255,0.05); 
+            border-radius: 8px; border-left: 4px solid #f39c12;
+        }
         
         .status-online { color: #2ecc71; font-weight: bold; }
         .status-offline { color: #ff6b6b; font-weight: bold; }
-        .text-muted { color: #bdc3c7; font-style: italic; }
+        .text-muted { color: #aaa; font-style: italic; font-size: 0.9em; }
     </style>
 </head>
 <body>
@@ -85,10 +101,10 @@
 
                     let htmlContent = `
                         <div class="info-row"><b>Navn:</b> ${data.username}</div>
+                        <div class="info-row"><b>UUID:</b> ${data.uuid}</div>
                         <div class="info-row"><b>Status:</b> ${statusDisplay}</div>
                     `;
 
-                    // Dynamisk "Sidst online" logik
                     if (data.status !== 'online') {
                         const lastSeenDate = new Date(data.lastSeen);
                         const now = new Date();
