@@ -40,7 +40,6 @@
         
         button:hover { background: #e67e22; transform: translateY(-2px); }
         
-        /* Fade-in effekt */
         #result { 
             margin-top: 30px; text-align: left; 
             animation: fadeIn 0.5s ease-in-out;
@@ -133,22 +132,29 @@
                         <div class="info-row"><b>Spillerpoints:</b> ${data.playerPoints.toLocaleString()}</div>
                     `;
 
-                    if (data.discordID) {
-                        htmlContent += `<div class="info-row"><b>Discord ID:</b> ${data.discordID}</div>`;
-                    } else {
-                        htmlContent += `<div class="info-row text-muted">Spilleren har ikke linked nogen discord konti endnu.</div>`;
-                    }
-
+                    // Rank/VIP info
                     if (data.proDays !== null && data.proDays > 0) {
                         htmlContent += `<div class="info-row"><b>Pro Dage tilbage:</b> ${data.proDays}</div>`;
                     } else if (data.vipDays !== null && data.vipDays > 0) {
                         htmlContent += `<div class="info-row"><b>VIP Dage tilbage:</b> ${data.vipDays}</div>`;
                     }
 
+                    // Lobby adgang
                     let uniqueAccess = data.lobbyAccess ? [...new Set(data.lobbyAccess)] : [];
                     if (uniqueAccess.length > 0) {
                         htmlContent += `<div class="info-row"><b>Lobby adgang:</b> ${uniqueAccess.join(", ")}</div>`;
-                    } else {
+                    }
+
+                    // Discord - ALTID TJEK FOR LINK
+                    if (data.discordID) {
+                        htmlContent += `<div class="info-row"><b>Discord ID:</b> ${data.discordID}</div>`;
+                    }
+
+                    // "Ikke fundet" beskeder til sidst
+                    if (!data.discordID) {
+                        htmlContent += `<div class="info-row text-muted">Spilleren har ikke linked nogen discord konti endnu.</div>`;
+                    }
+                    if (uniqueAccess.length === 0) {
                         htmlContent += `<div class="info-row text-muted">Spilleren har ikke købt adgang til nogen lobbyer endnu.</div>`;
                     }
 
