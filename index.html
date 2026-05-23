@@ -24,6 +24,8 @@
             border: 2px solid #f39c12; 
         }
         
+        h1 { color: #f39c12; }
+        
         input { padding: 12px; width: 60%; border-radius: 5px; border: none; margin-right: 10px; }
         
         button { padding: 12px 20px; background: #f39c12; border: none; color: white; cursor: pointer; border-radius: 5px; font-weight: bold; }
@@ -77,7 +79,6 @@
                 const data = await response.json();
 
                 if (data.username) {
-                    // Status logik
                     let statusDisplay = data.status === 'online' 
                         ? `<span class="status-online">Online (spiller på ${data.currentServer})</span>` 
                         : `<span class="status-offline">Offline</span>`;
@@ -87,18 +88,28 @@
                         <div class="info-row"><b>Status:</b> ${statusDisplay}</div>
                     `;
 
-                    // Vis kun "Sidst online" hvis spilleren er offline
+                    // Dynamisk "Sidst online" logik
                     if (data.status !== 'online') {
-                        const date = new Date(data.lastSeen);
-                        const formattedDate = date.toLocaleString('da-DK', {
+                        const lastSeenDate = new Date(data.lastSeen);
+                        const now = new Date();
+                        const diffMs = now - lastSeenDate;
+                        const diffSeconds = Math.floor(diffMs / 1000);
+                        const diffMinutes = Math.floor(diffSeconds / 60);
+                        const diffHours = Math.floor(diffMinutes / 60);
+                        const diffDays = Math.floor(diffHours / 24);
+
+                        let timeAgo = "";
+                        if (diffDays > 0) timeAgo = `${diffDays} dage siden`;
+                        else if (diffHours > 0) timeAgo = `${diffHours} timer siden`;
+                        else if (diffMinutes > 0) timeAgo = `${diffMinutes} minutter siden`;
+                        else timeAgo = `${diffSeconds} sekunder siden`;
+
+                        const formattedDate = lastSeenDate.toLocaleString('da-DK', {
                             day: '2-digit', month: '2-digit', year: 'numeric',
                             hour: '2-digit', minute: '2-digit'
                         });
-                        const today = new Date();
-                        const diffTime = Math.abs(today - date);
-                        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
                         
-                        htmlContent += `<div class="info-row"><b>Sidst online:</b> ${formattedDate} (${diffDays} dage siden)</div>`;
+                        htmlContent += `<div class="info-row"><b>Sidst online:</b> ${formattedDate} (${timeAgo})</div>`;
                     }
 
                     htmlContent += `
