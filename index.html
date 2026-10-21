@@ -184,7 +184,7 @@
             'mod': 'Mod',
             'admin': 'Admin',
             'owner': 'Ejer',
-            'builder': 'Bygger',
+            'bygger': 'Bygger',
             'headadmin': 'Head Admin'
         };
 
@@ -229,7 +229,7 @@
                 
                 if (!response.ok) {
                     if (response.status === 404) {
-                        throw new Error('Ingen spiller/konto fundet tilknyttet dette Discord ID.');
+                        throw new Error('Ingen konti fundet tilknyttet dette Discord ID.');
                     }
                     throw new Error(`Fejl fra API (Status: ${response.status})`);
                 }
