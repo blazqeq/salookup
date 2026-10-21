@@ -1,170 +1,354 @@
 <!DOCTYPE html>
-<html lang="da">
+<html lang="da" class="h-full bg-slate-950 text-slate-100">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spiller Lookup - SuperAwesome</title>
+    <title>SuperAwesome Player Lookup</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://www.minecraft.net/content/dam/community/fy23/minecraft-live-assets/hero-image.jpg');
-            background-size: cover;
-            background-attachment: fixed;
-            color: white; 
-            padding: 40px 20px; 
-            text-align: center; 
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
         }
-        
-        .lookup-container { 
-            background: rgba(30, 30, 30, 0.85); 
-            backdrop-filter: blur(10px);
-            max-width: 500px; 
-            margin: 0 auto; 
-            padding: 40px; 
-            border-radius: 20px; 
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        /* Custom Google-like glow on hover/focus */
+        .google-shadow {
+            box-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
         }
-        
-        h1 { color: #f39c12; margin-bottom: 20px; }
-        
-        input { 
-            padding: 14px; width: 60%; border-radius: 10px; border: 1px solid #444; 
-            background: #222; color: white; margin-right: 10px; outline: none;
+        .google-shadow-hover:hover, .google-shadow-hover:focus-within {
+            box-shadow: 0 2px 10px rgba(59, 130, 246, 0.25);
+            border-color: #3b82f6;
         }
-        
-        button { 
-            padding: 14px 25px; background: #f39c12; border: none; color: white; 
-            cursor: pointer; border-radius: 10px; font-weight: bold; transition: 0.3s;
-        }
-        
-        button:hover { background: #e67e22; transform: translateY(-2px); }
-        
-        #result { 
-            margin-top: 30px; text-align: left; 
-            animation: fadeIn 0.5s ease-in-out;
-        }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .info-row { 
-            margin: 10px 0; padding: 12px; background: rgba(255,255,255,0.05); 
-            border-radius: 8px; border-left: 4px solid #f39c12;
-        }
-        
-        .status-online { color: #2ecc71; font-weight: bold; }
-        .status-offline { color: #ff6b6b; font-weight: bold; }
-        .text-muted { color: #aaa; font-style: italic; font-size: 0.9em; }
     </style>
 </head>
-<body>
+<body class="min-h-full flex flex-col bg-[#0f172a] text-slate-100">
 
-    <div class="lookup-container">
-        <h1>Spiller Lookup</h1>
-        <p>Søg efter en spiller på SuperAwesome</p>
+    <!-- Top Header med Live Server Status -->
+    <header class="w-full px-6 py-4 flex items-center justify-between border-b border-slate-800/60 bg-slate-900/40 backdrop-blur-md sticky top-0 z-50">
+        <!-- Live Server Status Indicator (Toppen til venstre) -->
+        <div id="serverStatusBadge" class="flex items-center space-x-2.5 bg-slate-800/80 border border-slate-700/60 px-3.5 py-1.5 rounded-full text-xs font-medium">
+            <span id="serverStatusIndicator" class="inline-block w-2.5 h-2.5 rounded-full bg-slate-500"></span>
+            <span id="serverStatusText" class="text-slate-300">Henter serverstatus...</span>
+        </div>
+
+        <div class="text-xs text-slate-400 font-mono">
+            SuperAwesome API
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow flex flex-col items-center justify-center px-4 py-12 max-w-4xl mx-auto w-full">
         
-        <input type="text" id="username" placeholder="Indtast spillernavn...">
-        <button onclick="lookupPlayer()">Søg</button>
+        <!-- Google-style Logo Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-300 to-emerald-400 mb-2">
+                SuperAwesome
+            </h1>
+            <p class="text-slate-400 text-sm sm:text-base font-normal">
+                Discord Player Lookup & Profil-Søgning
+            </p>
+        </div>
 
-        <div id="result"></div>
-    </div>
+        <!-- Minimalistisk Søgebjælke (Google Style) uden eksempler -->
+        <div class="w-full max-w-2xl mb-8">
+            <form id="searchForm" onsubmit="handleSearch(event)" class="relative">
+                <div class="flex items-center bg-[#1e293b] border border-slate-700 rounded-full px-5 py-3.5 google-shadow google-shadow-hover transition-all duration-200">
+                    <i data-lucide="search" class="w-5 h-5 text-slate-400 mr-3 flex-shrink-0"></i>
+                    <input 
+                        type="text" 
+                        id="discordIdInput"
+                        placeholder="Indtast Discord ID (f.eks. 123456789012345678)..." 
+                        class="w-full bg-transparent border-none outline-none text-slate-100 placeholder-slate-500 text-base"
+                        required
+                        autocomplete="off"
+                        oninput="toggleClearBtn()"
+                    >
+                    <button 
+                        type="button" 
+                        id="clearBtn"
+                        onclick="clearSearch()" 
+                        class="hidden text-slate-400 hover:text-slate-200 p-1 mr-1 transition-colors"
+                        title="Ryd feltet"
+                    >
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                    <button 
+                        type="submit" 
+                        class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-full text-sm font-medium transition-colors ml-2 flex items-center space-x-1 flex-shrink-0"
+                    >
+                        <span>Søg</span>
+                    </button>
+                </div>
+            </form>
+        </div>
 
+        <!-- Loading Tilstand -->
+        <div id="loadingContainer" class="hidden flex-col items-center justify-center my-8 space-y-3">
+            <div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <p class="text-slate-400 text-sm">Søger efter spiller-data...</p>
+        </div>
+
+        <!-- Fejlmeddelelse Box -->
+        <div id="errorContainer" class="hidden w-full max-w-2xl bg-red-950/40 border border-red-800/60 rounded-2xl p-4 mb-8 text-red-200 flex items-start space-x-3">
+            <i data-lucide="alert-triangle" class="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5"></i>
+            <div>
+                <h3 class="font-semibold text-sm text-red-300">Søgning mislykkedes</h3>
+                <p id="errorText" class="text-xs text-red-400 mt-1">Ingen bruger fundet med det angivne Discord ID.</p>
+            </div>
+        </div>
+
+        <!-- Resultat Container -->
+        <div id="resultContainer" class="hidden w-full max-w-2xl space-y-6">
+            <!-- Overskrift over resultater -->
+            <div class="flex items-center justify-between px-2">
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Tilknyttede Spillere</span>
+                <span id="playerCountBadge" class="text-xs bg-slate-800 text-slate-300 px-2.5 py-0.5 rounded-full border border-slate-700">0 spillere</span>
+            </div>
+
+            <!-- Liste af Minecraft Konti -->
+            <div id="playersList" class="space-y-4">
+                <!-- Dynamisk indhold sættes via Javascript -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full text-center py-6 text-xs text-slate-500 border-t border-slate-800/40">
+        SuperAwesome Player Lookup &bull; Live data direkte fra SuperAwesome API
+    </footer>
+
+    <!-- JavaScript Logik -->
     <script>
-        const inputField = document.getElementById("username");
+        // Initialiser Lucide Ikoner
+        lucide.createIcons();
 
-        inputField.addEventListener("keypress", function(event) {
-            if (event.key === "Enter") {
-                event.preventDefault();
-                lookupPlayer();
-            }
-        });
+        // Kør server status check ved indlæsning
+        window.onload = function() {
+            fetchServerStatus();
+            // Opdater serverstatus hvert 30. sekund
+            setInterval(fetchServerStatus, 30000);
+        };
 
-        async function lookupPlayer() {
-            const user = inputField.value;
-            const resDiv = document.getElementById('result');
-            
-            if(!user) {
-                resDiv.innerHTML = "Indtast venligst et navn.";
-                return;
-            }
-
-            resDiv.innerHTML = "Henter data...";
+        // Hent live Minecraft server status fra mcsrvstat API uden MAX spillere
+        async function fetchServerStatus() {
+            const statusIndicator = document.getElementById('serverStatusIndicator');
+            const statusText = document.getElementById('serverStatusText');
 
             try {
-                const response = await fetch(`https://api.superawesome.dk/players/${user}`);
+                const res = await fetch('https://api.mcsrvstat.us/3/superawesome.dk');
+                if (!res.ok) throw new Error('Kunne ikke hente status');
+                const data = await res.json();
+
+                if (data.online && data.players) {
+                    const online = data.players.online ?? 0;
+                    
+                    statusIndicator.className = 'inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse';
+                    statusText.innerHTML = `Spillere online: <span class="text-emerald-400 font-semibold">${online}</span>`;
+                } else {
+                    statusIndicator.className = 'inline-block w-2.5 h-2.5 rounded-full bg-red-500';
+                    statusText.innerText = 'Serveren er offline';
+                }
+            } catch (err) {
+                console.error('Fejl ved hentning af serverstatus:', err);
+                statusIndicator.className = 'inline-block w-2.5 h-2.5 rounded-full bg-slate-500';
+                statusText.innerText = 'Serverstatus utilgængelig';
+            }
+        }
+
+        // Toggles for søgefeltets ryd-knap
+        function toggleClearBtn() {
+            const input = document.getElementById('discordIdInput');
+            const clearBtn = document.getElementById('clearBtn');
+            if (input.value.length > 0) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+        }
+
+        function clearSearch() {
+            const input = document.getElementById('discordIdInput');
+            input.value = '';
+            toggleClearBtn();
+            input.focus();
+        }
+
+        // Oversættelses-mapping af roller
+        const roleMappings = {
+            'seniormod': 'Senior Mod',
+            'support': 'Supporter',
+            'developer': 'Udvikler',
+            'mod': 'Moderator',
+            'admin': 'Administrator',
+            'owner': 'Ejer',
+            'builder': 'Bygger',
+            'headadmin': 'Head Admin'
+        };
+
+        // Mappede farver til specifikke roller
+        const roleBadgeColors = {
+            'Senior Mod': 'bg-purple-950/80 text-purple-300 border-purple-700/60',
+            'Supporter': 'bg-blue-950/80 text-blue-300 border-blue-700/60',
+            'Udvikler': 'bg-amber-950/80 text-amber-300 border-amber-700/60',
+            'Moderator': 'bg-indigo-950/80 text-indigo-300 border-indigo-700/60',
+            'Administrator': 'bg-red-950/80 text-red-300 border-red-700/60',
+            'Ejer': 'bg-rose-950/80 text-rose-300 border-rose-700/60'
+        };
+
+        // Formater rolle navn
+        function formatRole(rawRole) {
+            if (!rawRole) return null;
+            const cleanRole = rawRole.toString().toLowerCase().trim();
+            return roleMappings[cleanRole] || (cleanRole.charAt(0).toUpperCase() + cleanRole.slice(1));
+        }
+
+        // Hovedsøgning i SuperAwesome API
+        async function handleSearch(e) {
+            e.preventDefault();
+            const discordId = document.getElementById('discordIdInput').value.trim();
+            if (!discordId) return;
+
+            const loading = document.getElementById('loadingContainer');
+            const errorContainer = document.getElementById('errorContainer');
+            const resultContainer = document.getElementById('resultContainer');
+            const errorText = document.getElementById('errorText');
+            const playersList = document.getElementById('playersList');
+            const playerCountBadge = document.getElementById('playerCountBadge');
+
+            // Nulstil visninger
+            loading.classList.remove('hidden');
+            errorContainer.classList.add('hidden');
+            resultContainer.classList.add('hidden');
+            playersList.innerHTML = '';
+
+            try {
+                const response = await fetch(`https://api.superawesome.dk/players/${encodeURIComponent(discordId)}?type=discord`);
+                
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        throw new Error('Ingen spiller/konto fundet tilknyttet dette Discord ID.');
+                    }
+                    throw new Error(`Fejl fra API (Status: ${response.status})`);
+                }
+
                 const data = await response.json();
 
-                if (data.username) {
-                    let statusDisplay = data.status === 'online' 
-                        ? `<span class="status-online">Online (spiller på ${data.currentServer})</span>` 
-                        : `<span class="status-offline">Offline</span>`;
-
-                    let htmlContent = `
-                        <div class="info-row"><b>Navn:</b> ${data.username}</div>
-                        <div class="info-row"><b>UUID:</b> ${data.uuid}</div>
-                        <div class="info-row"><b>Status:</b> ${statusDisplay}</div>
-                    `;
-
-                    if (data.status !== 'online') {
-                        const lastSeenDate = new Date(data.lastSeen);
-                        const now = new Date();
-                        const diffMs = now - lastSeenDate;
-                        const diffSeconds = Math.floor(diffMs / 1000);
-                        const diffMinutes = Math.floor(diffSeconds / 60);
-                        const diffHours = Math.floor(diffMinutes / 60);
-                        const diffDays = Math.floor(diffHours / 24);
-
-                        let timeAgo = "";
-                        if (diffDays > 0) timeAgo = `${diffDays} dage siden`;
-                        else if (diffHours > 0) timeAgo = `${diffHours} timer siden`;
-                        else if (diffMinutes > 0) timeAgo = `${diffMinutes} minutter siden`;
-                        else timeAgo = `${diffSeconds} sekunder siden`;
-
-                        const formattedDate = lastSeenDate.toLocaleString('da-DK', {
-                            day: '2-digit', month: '2-digit', year: 'numeric',
-                            hour: '2-digit', minute: '2-digit'
-                        });
-                        
-                        htmlContent += `<div class="info-row"><b>Sidst online:</b> ${formattedDate} (${timeAgo})</div>`;
+                // Normaliser resultat (om det returneres som array eller objekt)
+                let players = [];
+                if (Array.isArray(data)) {
+                    players = data;
+                } else if (data && typeof data === 'object') {
+                    if (Array.isArray(data.players)) {
+                        players = data.players;
+                    } else if (data.username || data.uuid || data.name) {
+                        players = [data];
                     }
-
-                    htmlContent += `
-                        <div class="info-row"><b>Lobbypoints:</b> ${data.lobbyPoints.toLocaleString()}</div>
-                        <div class="info-row"><b>Spillerpoints:</b> ${data.playerPoints.toLocaleString()}</div>
-                    `;
-
-                    // Rank/VIP info
-                    if (data.proDays !== null && data.proDays > 0) {
-                        htmlContent += `<div class="info-row"><b>Pro Dage tilbage:</b> ${data.proDays}</div>`;
-                    } else if (data.vipDays !== null && data.vipDays > 0) {
-                        htmlContent += `<div class="info-row"><b>VIP Dage tilbage:</b> ${data.vipDays}</div>`;
-                    }
-
-                    // Lobby adgang
-                    let uniqueAccess = data.lobbyAccess ? [...new Set(data.lobbyAccess)] : [];
-                    if (uniqueAccess.length > 0) {
-                        htmlContent += `<div class="info-row"><b>Lobby adgang:</b> ${uniqueAccess.join(", ")}</div>`;
-                    }
-
-                    // Discord - ALTID TJEK FOR LINK
-                    if (data.discordID) {
-                        htmlContent += `<div class="info-row"><b>Discord ID:</b> ${data.discordID}</div>`;
-                    }
-
-                    // "Ikke fundet" beskeder til sidst
-                    if (!data.discordID) {
-                        htmlContent += `<div class="info-row text-muted">Spilleren har ikke linked nogen discord konti endnu.</div>`;
-                    }
-                    if (uniqueAccess.length === 0) {
-                        htmlContent += `<div class="info-row text-muted">Spilleren har ikke købt adgang til nogen lobbyer endnu.</div>`;
-                    }
-
-                    resDiv.innerHTML = htmlContent;
-                } else {
-                    resDiv.innerHTML = "Kunne ikke finde spilleren.";
                 }
-            } catch (error) {
-                resDiv.innerHTML = "Fejl: Kunne ikke forbinde til API'et.";
+
+                if (!players || players.length === 0) {
+                    throw new Error('Ingen Minecraft konti fundet for dette Discord ID.');
+                }
+
+                // Opdater antal spillere
+                playerCountBadge.innerText = `${players.length} ${players.length === 1 ? 'konto' : 'konti'} fundet`;
+
+                // Generer kort for hver spiller
+                players.forEach(player => {
+                    const username = player.username || player.name || player.playername || 'Ukendt Spiller';
+                    const uuid = player.uuid || player.id || 'Ingen UUID tilgængelig';
+                    
+                    // VIP / PRO Tjek
+                    const isVip = Boolean(player.vip || player.isVip || player.is_vip);
+                    const isPro = Boolean(player.pro || player.isPro || player.is_pro);
+
+                    // Håndter Roller
+                    let rawRoles = [];
+                    if (Array.isArray(player.roles)) rawRoles = player.roles;
+                    else if (typeof player.role === 'string') rawRoles = [player.role];
+                    else if (typeof player.rank === 'string') rawRoles = [player.rank];
+
+                    const formattedRoles = rawRoles.map(r => formatRole(r)).filter(Boolean);
+
+                    // Generer HTML for spiller-kort
+                    const playerCard = document.createElement('div');
+                    playerCard.className = 'bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col sm:flex-row items-center sm:items-start justify-between gap-4 transition-all hover:border-slate-700';
+
+                    // Head/Avatar URL via MC-Heads
+                    const avatarUrl = uuid !== 'Ingen UUID tilgængelig' 
+                        ? `https://mc-heads.net/avatar/${uuid}/80` 
+                        : `https://mc-heads.net/avatar/${username}/80`;
+
+                    playerCard.innerHTML = `
+                        <div class="flex items-center space-x-4 w-full sm:w-auto">
+                            <!-- Minecraft Head Avatar -->
+                            <img 
+                                src="${avatarUrl}" 
+                                alt="${username}" 
+                                class="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 flex-shrink-0 shadow-inner"
+                                onerror="this.onerror=null; this.src='https://mc-heads.net/avatar/MNS/80';"
+                            >
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center space-x-2 flex-wrap gap-y-1">
+                                    <h2 class="text-xl font-bold text-white tracking-wide truncate">${username}</h2>
+                                </div>
+                                
+                                <!-- UUID -->
+                                <div class="mt-1 flex items-center space-x-1.5 text-xs text-slate-400 font-mono">
+                                    <span class="text-slate-500">UUID:</span>
+                                    <span class="truncate max-w-[200px] sm:max-w-xs" title="${uuid}">${uuid}</span>
+                                    ${uuid !== 'Ingen UUID tilgængelig' ? `
+                                        <button onclick="copyToClipboard('${uuid}')" class="text-slate-500 hover:text-slate-300 transition-colors p-0.5" title="Kopiér UUID">
+                                            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Badges: Roller, VIP & PRO -->
+                        <div class="flex flex-wrap items-center justify-start sm:justify-end gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+                            ${isVip ? `<span class="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shadow-sm"><i data-lucide="crown" class="w-3.5 h-3.5"></i> VIP</span>` : ''}
+                            ${isPro ? `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shadow-sm"><i data-lucide="zap" class="w-3.5 h-3.5"></i> PRO</span>` : ''}
+                            
+                            ${formattedRoles.map(role => {
+                                const badgeColor = roleBadgeColors[role] || 'bg-slate-800 text-slate-300 border-slate-700';
+                                return `<span class="${badgeColor} border px-3 py-1 rounded-full text-xs font-medium">${role}</span>`;
+                            }).join('')}
+
+                            ${!isVip && !isPro && formattedRoles.length === 0 ? `<span class="text-xs text-slate-500 italic bg-slate-950/50 px-2.5 py-1 rounded-md border border-slate-800">Standard Spiller</span>` : ''}
+                        </div>
+                    `;
+
+                    playersList.appendChild(playerCard);
+                });
+
+                // Genindlæs Lucide ikoner til de nye elementer
+                lucide.createIcons();
+                resultContainer.classList.remove('hidden');
+
+            } catch (err) {
+                console.error('Fejl ved opstilling af data:', err);
+                errorText.innerText = err.message || 'Der opstod en uventet fejl under hentning af data.';
+                errorContainer.classList.remove('hidden');
+            } finally {
+                loading.classList.add('hidden');
             }
+        }
+
+        // Hjælpefunktion til at kopiere UUID
+        function copyToClipboard(text) {
+            const tempInput = document.createElement('input');
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+
+            // Valgfri lille feedback
+            alert('UUID kopieret til udklipsholderen!');
         }
     </script>
 </body>
